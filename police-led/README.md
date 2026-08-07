@@ -11,4 +11,6 @@
 
 Схема підключення компонентів:
 
-<img src="board_image.png" width="600">
+<p aligne="center">
+    <img src="board_image.png" width="800">
+</p>
