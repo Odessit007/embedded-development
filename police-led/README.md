@@ -10,4 +10,5 @@
 
 
 Схема підключення компонентів:
-<img src="board_image.png" width="300">
+
+<img src="board_image.png" width="600">
