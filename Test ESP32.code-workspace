@@ -1,0 +1,20 @@
+{
+	"folders": [
+		{
+			"path": "../../../../../../Documents/PlatformIO/Projects/Test ESP32"
+		},
+		{
+			"name": "Test UART",
+			"path": "../../../../../../Documents/PlatformIO/Projects/Test UART"
+		},
+		{
+			"name": "test-esp32-uart-upload",
+			"path": "../../../../../../Documents/PlatformIO/Projects/test-esp32-uart-upload"
+		},
+		{
+			"name": "police-led",
+			"path": "../../../../../../Documents/PlatformIO/Projects/police-led"
+		}
+	],
+	"settings": {}
+}

@@ -12,7 +12,7 @@
 
 #define BUTTON_IN  16
 #define LED_OUT    15
-static int lastButtonState = HIGH;
+static int lastButtonState = 2;  // Щоб відрізнялось від 0 та 1
 
 void setup() {
     Serial.begin(115200);
