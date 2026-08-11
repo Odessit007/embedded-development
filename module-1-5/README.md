@@ -5,5 +5,5 @@
 
 Мікроконтролер зафіксував 19:
 <p align="center">
-    <img src="microcontroller.png" width="400">
+    <img src="microcontroller.png" width="200">
 </p>
