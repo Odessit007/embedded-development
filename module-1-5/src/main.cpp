@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #define BUTTON_IN 16                  // Кнопка підключена до GPIO 16
-volatile uint32_t button_counter = 0; // volatile обов'язковий для змінних, я
+volatile uint32_t button_counter = 0; // volatile обов'язковий для змінних, які змінюються в обробнику переривань
 uint32_t last_count = 0;              // Змінна для відслідковування змін у головному циклі
 
 // Швидка функція обробки переривань (ISR), яка розміщується в оперативній пам'яті
