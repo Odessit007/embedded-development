@@ -23,5 +23,5 @@ Delta = (U_calc - U_read) / U_read * 100%
 
 
 <p align="center">
-    <img src="board.png" width="400">
+    <img src="board.jpg" width="400">
 </p>
