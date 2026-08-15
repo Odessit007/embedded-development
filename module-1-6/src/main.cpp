@@ -1,7 +1,6 @@
 #include <Arduino.h>
 
 #define ADC_IN 4
-#define LED_OUT 15
 #define ADC_MAX 4095.0f
 #define U_REF 3100.0f
 
@@ -10,7 +9,6 @@ void setup() {
     Serial.begin(115200);
     analogReadResolution(12);
     pinMode(ADC_IN, INPUT);
-    pinMode(LED_OUT, OUTPUT);
 
     Serial.println();
     Serial.println("ADP_RAW | U_calc | U_ADP | Похибка, %");
