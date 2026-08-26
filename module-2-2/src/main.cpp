@@ -7,65 +7,67 @@ public:
   static constexpr uint8_t n_iter = 10;
 };
 
-volatile uint32_t last_activation_time = 0;
-volatile uint32_t activation_interval = 0;
-volatile bool relay_activated = false;
-volatile bool waiting_for_relay = false;
+volatile uint32_t trigger_time = 0;
+volatile uint32_t response_time = 0;
+volatile bool relay_triggered = false;
 
 void pin4Interrupt() {
-  const uint32_t activation_time = millis();
-
-  if (last_activation_time != 0) {
-    
-    activation_interval = activation_time - last_activation_time;
-    relay_activated = true;
+  if (!relay_triggered) {
+    response_time = millis() - trigger_time;
+    relay_triggered = true;
   }
-  last_activation_time = activation_time;
 }
 
 void setup() {
   Serial.begin(115200);
   pinMode(Parameters::pin_in, INPUT_PULLUP);
   pinMode(Parameters::pin_out, OUTPUT);
-  digitalWrite(Parameters::pin_out, LOW);
+  digitalWrite(Parameters::pin_out, LOW); // Transistor OFF, Relay OFF
   attachInterrupt(digitalPinToInterrupt(Parameters::pin_in), pin4Interrupt, FALLING);
 }
 
-
 void loop() {
-  static uint8_t n_iter = 0;
+  static uint8_t iter_count = 0;
   static uint32_t total_time = 0;
 
-  if (!waiting_for_relay) {
-    Serial.println("Setting pin_out to HIGH");
-    digitalWrite(Parameters::pin_out, HIGH);
-    waiting_for_relay = true;
+  // Pin = HIGH -> BC547 ON -> relay IN = LOW -> Relay ON
+  relay_triggered = false;
+  trigger_time = millis();
+  digitalWrite(Parameters::pin_out, HIGH);
+
+  uint32_t timeout_start = millis();
+  while (!relay_triggered && (millis() - timeout_start < 200)) {
+    // Wait for interrupt
   }
 
-  if (!relay_activated) {
-    return;
-  }
-
-  noInterrupts();
-  const uint32_t iteration_time = activation_interval;
-  waiting_for_relay = false;
-  relay_activated = false;
+  // Turn OFF relay
   digitalWrite(Parameters::pin_out, LOW);
-  interrupts();
 
-  Serial.print("Current time: ");
-  Serial.print(iteration_time);
-  Serial.println("ms");
-  total_time += iteration_time;
-  ++n_iter;
+  if (relay_triggered) {
+    uint32_t elapsed = response_time;
+    total_time += elapsed;
+    iter_count++;
 
-  if (n_iter == Parameters::n_iter) {
-    Serial.print("Mean time for the last ");
+    Serial.print("Iteration ");
+    Serial.print(iter_count);
+    Serial.print(": Response time = ");
+    Serial.print(elapsed);
+    Serial.println(" ms");
+  } else {
+    Serial.println("Error: Relay activation timeout!");
+  }
+
+  // Print overall average once batch finishes
+  if (iter_count >= Parameters::n_iter) {
+    Serial.print("\n--> Mean activation time for ");
     Serial.print(Parameters::n_iter);
     Serial.print(" iterations: ");
-    Serial.print(total_time / Parameters::n_iter);
-    Serial.println("ms");
+    Serial.print((float)total_time / Parameters::n_iter);
+    Serial.println(" ms\n");
+
     total_time = 0;
-    n_iter = 0;
+    iter_count = 0;
   }
+
+  delay(1000); 
 }
