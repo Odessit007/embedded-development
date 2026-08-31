@@ -7,7 +7,7 @@ public:
   static constexpr uint8_t n_iter = 10;
 };
 
-volatile uint32_t trigger_time = 0;
+uint32_t trigger_time = 0;
 volatile uint32_t response_time = 0;
 volatile bool relay_triggered = false;
 
