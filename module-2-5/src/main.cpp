@@ -3,14 +3,14 @@
 namespace Parameters {
   constexpr uint8_t out_pin = 16;  // Assuming an active-high relay is connected here that controls a fan
   
-  // constexpr uint32_t on_duration_s = 15 * 60;                           // 15 minutes ON
-  // constexpr uint32_t off_duration_s = 45 * 60;                          // 45 minutes OFF
-  // constexpr uint32_t cycle_duration_s = on_duration_s + off_duration_s; // 1 full cycle = 60 minutes
+  constexpr uint32_t on_duration_s = 15 * 60;                           // 15 minutes ON
+  constexpr uint32_t off_duration_s = 45 * 60;                          // 45 minutes OFF
+  constexpr uint32_t cycle_duration_s = on_duration_s + off_duration_s; // 1 full cycle = 60 minutes
 
   // Debug parameters
-  constexpr uint32_t on_duration_s = 1;                                 // debug: 1 second ON
-  constexpr uint32_t off_duration_s = 3;                                // debug: 3 seconds OFF
-  constexpr uint32_t cycle_duration_s = on_duration_s + off_duration_s; // debug: 1 full cycle = 12 seconds
+  // constexpr uint32_t on_duration_s = 1;                                 // debug: 1 second ON
+  // constexpr uint32_t off_duration_s = 3;                                // debug: 3 seconds OFF
+  // constexpr uint32_t cycle_duration_s = on_duration_s + off_duration_s; // debug: 1 full cycle = 12 seconds
 
   constexpr uint32_t tick_period_us = 1000000;   // 1M microseconds = 1 second
 }
