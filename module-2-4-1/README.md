@@ -21,8 +21,8 @@ RC-фільтр реалізований так, що
 * другий край кнопки -- GND
 
 <p align="center">
-    <img src="view1.png" width="400">
+    <img src="view1.jpg" width="400">
 </p>
 <p align="center">
-    <img src="view2.png" width="200">
+    <img src="view2.jpg" width="200">
 </p>
