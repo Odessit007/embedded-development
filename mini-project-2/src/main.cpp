@@ -1,4 +1,5 @@
 #include "buttonFSM.h"
+#include "led.h"
 #include <Arduino.h>
 
 enum TrafficLightState {
@@ -29,15 +30,16 @@ struct Parameters {
   uint32_t yellow_red_on_time_ms = 2000;
 };
 
-
 Parameters parameters;
 
 class TrafficLightStateMachine {
   private:
   Parameters parameters;
   ButtonStateMachine button_state_machine;
+  Led green_led;
+  Led yellow_led;
+  Led red_led;
   uint32_t last_change_time_ms = 0;
-  uint32_t last_blink_time_ms = 0;
   TrafficLightState current_state = GREEN_ON;
 
   const char* stateName(TrafficLightState state) {
@@ -66,19 +68,17 @@ class TrafficLightStateMachine {
   public:
   TrafficLightStateMachine(Parameters parameters)
     : parameters(parameters),
-      button_state_machine(parameters.button_pin, parameters.debounce_delay_ms) {
+      button_state_machine(parameters.button_pin, parameters.debounce_delay_ms),
+      green_led(parameters.green_led_pin, parameters.green_blink_period_ms, 0),
+      yellow_led(parameters.yellow_led_pin, parameters.yellow_blink_period_ms, 0),
+      red_led(parameters.red_led_pin) {
   }
 
   void init() {
     button_state_machine.init();
-
-    pinMode(parameters.green_led_pin, OUTPUT);
-    pinMode(parameters.yellow_led_pin, OUTPUT);
-    pinMode(parameters.red_led_pin, OUTPUT);
-
-    digitalWrite(parameters.green_led_pin, HIGH);  // Starting in GREEN_ON state
-    digitalWrite(parameters.yellow_led_pin, LOW);
-    digitalWrite(parameters.red_led_pin, LOW);
+    green_led.init(HIGH);
+    yellow_led.init(LOW);
+    red_led.init(LOW);
   }
 
   void updateState() {
@@ -90,73 +90,62 @@ class TrafficLightStateMachine {
     if (current_button_state == PRESSED && last_button_state != PRESSED) {
       if (current_state != YELLOW_BLINK) {
         transitionTo(YELLOW_BLINK);
-        digitalWrite(parameters.yellow_led_pin, HIGH);
-        digitalWrite(parameters.green_led_pin, LOW);
-        digitalWrite(parameters.red_led_pin, LOW);
+        yellow_led.on();
+        green_led.off();
+        red_led.off();
       } else if (current_state == YELLOW_BLINK) {
         transitionTo(GREEN_ON);
         last_change_time_ms = current_time_ms;
-        digitalWrite(parameters.yellow_led_pin, LOW);
-        digitalWrite(parameters.green_led_pin, HIGH);
+        yellow_led.off();
+        green_led.on();
       }
     }
 
     switch (current_state) {
       case GREEN_ON:
         if (current_time_ms - last_change_time_ms > parameters.green_on_time_ms) {
-          Serial.print("curren_time_ms: ");
-          Serial.print(current_time_ms);
-          Serial.print(", last_change_time_ms: ");
-          Serial.println(last_change_time_ms);
           transitionTo(GREEN_BLINK);
           last_change_time_ms = current_time_ms;
-          last_blink_time_ms = current_time_ms;
-          digitalWrite(parameters.green_led_pin, LOW);
+          green_led.off();
         }
         break;
       case GREEN_BLINK:
         if (current_time_ms - last_change_time_ms <= parameters.green_blink_time_ms) {
-          if (current_time_ms - last_blink_time_ms >= parameters.green_blink_period_ms) {
-            digitalWrite(parameters.green_led_pin, !digitalRead(parameters.green_led_pin));
-            last_blink_time_ms = current_time_ms;
-          }
+          green_led.blink();
         } else {
           transitionTo(YELLOW_ON);
           last_change_time_ms = current_time_ms;
-          digitalWrite(parameters.green_led_pin, LOW);
-          digitalWrite(parameters.yellow_led_pin, HIGH);
+          green_led.off();
+          yellow_led.on();
         }
         break;
       case YELLOW_ON:
         if (current_time_ms - last_change_time_ms > parameters.yellow_on_time_ms) {
           transitionTo(RED_ON);
           last_change_time_ms = current_time_ms;
-          digitalWrite(parameters.yellow_led_pin, LOW);
-          digitalWrite(parameters.red_led_pin, HIGH);
+          yellow_led.off();
+          red_led.on();
         }
         break;
       case RED_ON:
         if (current_time_ms - last_change_time_ms > parameters.red_on_time_ms) {
           transitionTo(YELLOW_AND_RED_ON);
           last_change_time_ms = current_time_ms;
-          digitalWrite(parameters.yellow_led_pin, HIGH);
-          digitalWrite(parameters.red_led_pin, HIGH);
+          yellow_led.on();
+          red_led.on();
         }
         break;
       case YELLOW_AND_RED_ON:
         if (current_time_ms - last_change_time_ms > parameters.yellow_red_on_time_ms) {
           transitionTo(GREEN_ON);
           last_change_time_ms = current_time_ms;
-          digitalWrite(parameters.yellow_led_pin, LOW);
-          digitalWrite(parameters.red_led_pin, LOW);
-          digitalWrite(parameters.green_led_pin, HIGH);
+          red_led.off();
+          yellow_led.off();
+          green_led.on();
         }
         break;
       case YELLOW_BLINK:
-        if (current_time_ms - last_blink_time_ms >= parameters.yellow_blink_period_ms) {
-          digitalWrite(parameters.yellow_led_pin, !digitalRead(parameters.yellow_led_pin));
-          last_blink_time_ms = current_time_ms;
-        }
+        yellow_led.blink();
         break;
     }
   }
