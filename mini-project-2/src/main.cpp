@@ -40,6 +40,39 @@ class TrafficLightStateMachine {
   uint32_t last_blink_time_ms = 0;
   TrafficLightState current_state = GREEN_ON;
 
+  const char* stateName(TrafficLightState state) {
+    switch (state) {
+      case GREEN_ON: return "GREEN_ON";
+      case GREEN_BLINK: return "GREEN_BLINK";
+      case YELLOW_ON: return "YELLOW_ON";
+      case RED_ON: return "RED_ON";
+      case YELLOW_AND_RED_ON: return "YELLOW_AND_RED_ON";
+      case YELLOW_BLINK: return "YELLOW_BLINK";
+    }
+    return "UNKNOWN";
+  }
+
+  const char* buttonStateName(ButtonState state) {
+    switch (state) {
+      case IDLE: return "IDLE";
+      case MAYBE_PRESSED: return "MAYBE_PRESSED";
+      case PRESSED: return "PRESSED";
+      case MAYBE_RELEASED: return "MAYBE_RELEASED";
+    }
+    return "UNKNOWN";
+  }
+
+  void transitionTo(TrafficLightState next_state) {
+    if (current_state == next_state) {
+      return;
+    }
+
+    Serial.print(stateName(current_state));
+    Serial.print(" -> ");
+    Serial.println(stateName(next_state));
+    current_state = next_state;
+  }
+
   public:
   TrafficLightStateMachine(Parameters parameters)
     : parameters(parameters),
@@ -49,21 +82,28 @@ class TrafficLightStateMachine {
   void updateState() {
     button_state_machine.updateState();
     ButtonState button_state = button_state_machine.getState();
+    Serial.print("Current button state: ");
+    Serial.print(buttonStateName(button_state));
+    Serial.print(" | Current traffic light state: ");
+    Serial.println(stateName(current_state));
     if (button_state == PRESSED && current_state != YELLOW_BLINK) {
-      current_state = YELLOW_BLINK;
+      transitionTo(YELLOW_BLINK);
+      digitalWrite(parameters.yellow_led_pin, HIGH);
+      digitalWrite(parameters.green_led_pin, LOW);
+      digitalWrite(parameters.red_led_pin, LOW);
     } else if (button_state == IDLE && current_state == YELLOW_BLINK) {
-      current_state = GREEN_ON;
+      transitionTo(GREEN_ON);
     }
 
+    uint32_t current_time_ms = millis();
     switch (current_state) {
-      uint32_t current_time_ms = millis();
       case GREEN_ON:
         // <= 5s since the last change, still green
         if (current_time_ms - last_change_time_ms <= parameters.green_on_time_ms) {
           digitalWrite(parameters.green_led_pin, HIGH);
         // > 5s --> switching to BLINK mode, turn off the green LED, update timers.
         } else {
-          current_state = GREEN_BLINK;
+          transitionTo(GREEN_BLINK);
           last_change_time_ms = current_time_ms;
           last_blink_time_ms = current_time_ms;
           digitalWrite(parameters.green_led_pin, LOW);
@@ -76,7 +116,7 @@ class TrafficLightStateMachine {
             last_blink_time_ms = current_time_ms;
           }
         } else {
-          current_state = YELLOW_ON;
+          transitionTo(YELLOW_ON);
           last_change_time_ms = current_time_ms;
           digitalWrite(parameters.green_led_pin, LOW);
           digitalWrite(parameters.yellow_led_pin, HIGH);
@@ -86,7 +126,7 @@ class TrafficLightStateMachine {
         if (current_time_ms - last_change_time_ms <= parameters.yellow_on_time_ms) {
           digitalWrite(parameters.yellow_led_pin, HIGH);
         } else {
-          current_state = YELLOW_AND_RED_ON;
+          transitionTo(YELLOW_AND_RED_ON);
           last_change_time_ms = current_time_ms;
           digitalWrite(parameters.red_led_pin, HIGH);
         }
@@ -95,7 +135,7 @@ class TrafficLightStateMachine {
         if (current_time_ms - last_change_time_ms <= parameters.red_on_time_ms) {
           digitalWrite(parameters.red_led_pin, HIGH);
         } else {
-          current_state = YELLOW_AND_RED_ON;
+          transitionTo(YELLOW_AND_RED_ON);
           last_change_time_ms = current_time_ms;
           digitalWrite(parameters.yellow_led_pin, HIGH);
           digitalWrite(parameters.red_led_pin, HIGH);
@@ -106,7 +146,7 @@ class TrafficLightStateMachine {
           digitalWrite(parameters.yellow_led_pin, HIGH);
           digitalWrite(parameters.red_led_pin, HIGH);
         } else {
-          current_state = GREEN_ON;
+          transitionTo(GREEN_ON);
           last_change_time_ms = current_time_ms;
           digitalWrite(parameters.yellow_led_pin, LOW);
           digitalWrite(parameters.red_led_pin, LOW);
