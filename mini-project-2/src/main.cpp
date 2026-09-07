@@ -52,16 +52,6 @@ class TrafficLightStateMachine {
     return "UNKNOWN";
   }
 
-  const char* buttonStateName(ButtonState state) {
-    switch (state) {
-      case IDLE: return "IDLE";
-      case MAYBE_PRESSED: return "MAYBE_PRESSED";
-      case PRESSED: return "PRESSED";
-      case MAYBE_RELEASED: return "MAYBE_RELEASED";
-    }
-    return "UNKNOWN";
-  }
-
   void transitionTo(TrafficLightState next_state) {
     if (current_state == next_state) {
       return;
@@ -79,30 +69,45 @@ class TrafficLightStateMachine {
       button_state_machine(parameters.button_pin, parameters.debounce_delay_ms) {
   }
 
+  void init() {
+    button_state_machine.init();
+
+    pinMode(parameters.green_led_pin, OUTPUT);
+    pinMode(parameters.yellow_led_pin, OUTPUT);
+    pinMode(parameters.red_led_pin, OUTPUT);
+
+    digitalWrite(parameters.green_led_pin, HIGH);  // Starting in GREEN_ON state
+    digitalWrite(parameters.yellow_led_pin, LOW);
+    digitalWrite(parameters.red_led_pin, LOW);
+  }
+
   void updateState() {
+      uint32_t current_time_ms = millis();
+
+    ButtonState last_button_state = button_state_machine.getState();
     button_state_machine.updateState();
-    ButtonState button_state = button_state_machine.getState();
-    Serial.print("Current button state: ");
-    Serial.print(buttonStateName(button_state));
-    Serial.print(" | Current traffic light state: ");
-    Serial.println(stateName(current_state));
-    if (button_state == PRESSED && current_state != YELLOW_BLINK) {
-      transitionTo(YELLOW_BLINK);
-      digitalWrite(parameters.yellow_led_pin, HIGH);
-      digitalWrite(parameters.green_led_pin, LOW);
-      digitalWrite(parameters.red_led_pin, LOW);
-    } else if (button_state == IDLE && current_state == YELLOW_BLINK) {
-      transitionTo(GREEN_ON);
+    ButtonState current_button_state = button_state_machine.getState();
+    if (current_button_state == PRESSED && last_button_state != PRESSED) {
+      if (current_state != YELLOW_BLINK) {
+        transitionTo(YELLOW_BLINK);
+        digitalWrite(parameters.yellow_led_pin, HIGH);
+        digitalWrite(parameters.green_led_pin, LOW);
+        digitalWrite(parameters.red_led_pin, LOW);
+      } else if (current_state == YELLOW_BLINK) {
+        transitionTo(GREEN_ON);
+        last_change_time_ms = current_time_ms;
+        digitalWrite(parameters.yellow_led_pin, LOW);
+        digitalWrite(parameters.green_led_pin, HIGH);
+      }
     }
 
-    uint32_t current_time_ms = millis();
     switch (current_state) {
       case GREEN_ON:
-        // <= 5s since the last change, still green
-        if (current_time_ms - last_change_time_ms <= parameters.green_on_time_ms) {
-          digitalWrite(parameters.green_led_pin, HIGH);
-        // > 5s --> switching to BLINK mode, turn off the green LED, update timers.
-        } else {
+        if (current_time_ms - last_change_time_ms > parameters.green_on_time_ms) {
+          Serial.print("curren_time_ms: ");
+          Serial.print(current_time_ms);
+          Serial.print(", last_change_time_ms: ");
+          Serial.println(last_change_time_ms);
           transitionTo(GREEN_BLINK);
           last_change_time_ms = current_time_ms;
           last_blink_time_ms = current_time_ms;
@@ -123,18 +128,15 @@ class TrafficLightStateMachine {
         }
         break;
       case YELLOW_ON:
-        if (current_time_ms - last_change_time_ms <= parameters.yellow_on_time_ms) {
-          digitalWrite(parameters.yellow_led_pin, HIGH);
-        } else {
-          transitionTo(YELLOW_AND_RED_ON);
+        if (current_time_ms - last_change_time_ms > parameters.yellow_on_time_ms) {
+          transitionTo(RED_ON);
           last_change_time_ms = current_time_ms;
+          digitalWrite(parameters.yellow_led_pin, LOW);
           digitalWrite(parameters.red_led_pin, HIGH);
         }
         break;
       case RED_ON:
-        if (current_time_ms - last_change_time_ms <= parameters.red_on_time_ms) {
-          digitalWrite(parameters.red_led_pin, HIGH);
-        } else {
+        if (current_time_ms - last_change_time_ms > parameters.red_on_time_ms) {
           transitionTo(YELLOW_AND_RED_ON);
           last_change_time_ms = current_time_ms;
           digitalWrite(parameters.yellow_led_pin, HIGH);
@@ -142,10 +144,7 @@ class TrafficLightStateMachine {
         }
         break;
       case YELLOW_AND_RED_ON:
-        if (current_time_ms - last_change_time_ms <= parameters.yellow_red_on_time_ms) {
-          digitalWrite(parameters.yellow_led_pin, HIGH);
-          digitalWrite(parameters.red_led_pin, HIGH);
-        } else {
+        if (current_time_ms - last_change_time_ms > parameters.yellow_red_on_time_ms) {
           transitionTo(GREEN_ON);
           last_change_time_ms = current_time_ms;
           digitalWrite(parameters.yellow_led_pin, LOW);
@@ -168,36 +167,9 @@ TrafficLightStateMachine traffic_light_state_machine(parameters);
 void setup() {
   Serial.begin(115200);
 
-  // pinMode(parameters.button_pin, INPUT_PULLUP);
-  pinMode(parameters.green_led_pin, OUTPUT);
-  pinMode(parameters.yellow_led_pin, OUTPUT);
-  pinMode(parameters.red_led_pin, OUTPUT);
-
-  digitalWrite(parameters.green_led_pin, LOW);
-  digitalWrite(parameters.yellow_led_pin, LOW);
-  digitalWrite(parameters.red_led_pin, LOW);
+  traffic_light_state_machine.init();
 }
 
 void loop() {
   traffic_light_state_machine.updateState();
-  // digitalWrite(parameters.green_led_pin, HIGH);
-  // Serial.println("Green LED ON");
-  // delay(1000);
-  // digitalWrite(parameters.green_led_pin, LOW);
-  // Serial.println("Green LED OFF");
-  // delay(1000);
-
-  // digitalWrite(parameters.yellow_led_pin, HIGH);
-  // Serial.println("Yellow LED ON");
-  // delay(1000);
-  // digitalWrite(parameters.yellow_led_pin, LOW);
-  // Serial.println("Yellow LED OFF");
-  // delay(1000);
-
-  // digitalWrite(parameters.red_led_pin, HIGH);
-  // Serial.println("Red LED ON");
-  // delay(1000);
-  // digitalWrite(parameters.red_led_pin, LOW);
-  // Serial.println("Red LED OFF");
-  // delay(1000);
 }

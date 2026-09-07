@@ -10,7 +10,7 @@ ButtonStateMachine::ButtonStateMachine(uint8_t button_pin, uint32_t debounce_del
 void ButtonStateMachine::init() {
     pinMode(button_pin, INPUT_PULLUP);
 
-    Serial.println("Pins initialized");
+    Serial.println("Button: Pins initialized");
   }
 
 ButtonState ButtonStateMachine::getState() {
@@ -35,17 +35,17 @@ void ButtonStateMachine::updateState() {
         if (button_pin_value == LOW) {
           current_state = MAYBE_PRESSED;
           last_trigger_time_ms = current_time_ms;
-          Serial.println("IDLE --> MAYBE_PRESSED");
+          Serial.println("Button: IDLE --> MAYBE_PRESSED");
         }
         break;
       case MAYBE_PRESSED:
         if (current_time_ms - last_trigger_time_ms >= debounce_delay_ms) {
           if (button_pin_value == LOW) {
             current_state = PRESSED;
-            Serial.print("MAYBE_PRESSED --> PRESSED. n_clicks = ");
+            Serial.print("MAYBE_PRESSED --> PRESSED.");
           } else {
             current_state = IDLE;
-            Serial.println("MAYBE_PRESSED --> IDLE");
+            Serial.println("Button: MAYBE_PRESSED --> IDLE");
           }
         }
         break;
@@ -53,17 +53,17 @@ void ButtonStateMachine::updateState() {
         if (button_pin_value == HIGH) {
           current_state = MAYBE_RELEASED;
           last_trigger_time_ms = current_time_ms;
-          Serial.println("PRESSED --> MAYBE_RELEASED");
+          Serial.println("Button: PRESSED --> MAYBE_RELEASED");
         }
         break;
       case MAYBE_RELEASED:
         if (current_time_ms - last_trigger_time_ms >= debounce_delay_ms) {
           if (button_pin_value == HIGH) {
             current_state = IDLE;
-            Serial.println("MAYBE_RELEASED --> IDLE");
+            Serial.println("Button: MAYBE_RELEASED --> IDLE");
           } else {
             current_state = PRESSED;
-            Serial.println("MAYBE_RELEASED --> PRESSED. n_clicks = ");
+            Serial.println("Button: MAYBE_RELEASED --> PRESSED.");
           }
         }
         break;
