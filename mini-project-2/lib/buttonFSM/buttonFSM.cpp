@@ -1,21 +1,23 @@
 #include "buttonFSM.h"
 #include <Arduino.h>
 
-class ButtonStateMachine {
-public:
-  ButtonStateMachine(uint32_t debounce_delay)
-    : button_pin(button_pin),
-      debounce_delay_ms(debounce_delay),
-      last_trigger_time_ms(0),
-      current_state(IDLE) {}
+ButtonStateMachine::ButtonStateMachine(uint8_t button_pin, uint32_t debounce_delay)
+  : button_pin(button_pin),
+    debounce_delay_ms(debounce_delay),
+    last_trigger_time_ms(0),
+    current_state(IDLE) {}
 
-  void initPins() {
+void ButtonStateMachine::init() {
     pinMode(button_pin, INPUT_PULLUP);
 
     Serial.println("Pins initialized");
   }
 
-  void updateState() {
+ButtonState ButtonStateMachine::getState() {
+    return current_state;
+}
+
+void ButtonStateMachine::updateState() {
     /*
     Transitions:
     IDLE -- (button pin = LOW) --> MAYBE_PRESSED
@@ -68,9 +70,3 @@ public:
     }
   }
 
-private:
-  uint8_t button_pin;
-  uint32_t debounce_delay_ms;
-  uint32_t last_trigger_time_ms;
-  ButtonState current_state;
-};
