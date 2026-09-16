@@ -1,3 +1,5 @@
+<img src="image.png" alt="ADC calibration chart" style="width:50%; max-width:50%; display:block; height:auto;">
+
 ```
 RAW   U_manual(mV)   U_cali(mV)   Error(%)
 ----------------------------------------------
@@ -34,5 +36,3 @@ RAW   U_manual(mV)   U_cali(mV)   Error(%)
 3860           2922         3031       3.60
 4095           3100         3134       1.08
 ```
-
-<img src="image.png" alt="ADC calibration chart" style="width:50%; max-width:50%; display:block; height:auto;">
